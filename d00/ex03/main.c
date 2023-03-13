@@ -13,12 +13,14 @@ int main(void){
 
     while (1) {
         
-        if ((PIND & (1 << PD2)) == 0){ // Button is being pressed
-            _delay_ms(DEBOUNCE);
-            if ((PIND & (1 << PD2)) == 0){
-                PORTB ^= (1 << PB0); // Toogle led
-                _delay_ms(LOCK_INPUT); // Lock delay to avoid side effects
+        if (!(PIND & (1 << PD2))){ // Button is being pressed
+            _delay_ms(DEBOUNCE); // Debounce timer
+            if (!(PIND & (1 << PD2))){
+                PORTB |= (1 << PB0); // Activate led
             }
+        }
+        else{
+            PORTB &= (0 << PB0); // De-activate led
         }
     }
     return (0);
