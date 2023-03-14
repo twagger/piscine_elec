@@ -2,6 +2,9 @@
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
+#define MAX_VAL 65535
+
+float duty_cycle = 0.1;
 
 int main(void){
 
@@ -21,9 +24,9 @@ int main(void){
     TCCR1A |= (1 << WGM11);
     TCCR1B |= (1 << WGM12) | (1 << WGM13);
     // Use ICR1 as max value
-    ICR1 = 65535;
+    ICR1 = MAX_VAL;
     // 3. Value to compare the timer with
-    OCR1A = 6556;
+    OCR1A = MAX_VAL * duty_cycle;
     // 4. Clock prescale factor (256) + launch the timer
     TCCR1B |= (1 << CS12);
 

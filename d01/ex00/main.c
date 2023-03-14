@@ -22,5 +22,9 @@ int main(void){
     // 4. Clock prescale factor (256 here) + launch the timer
     TCCR1B |= (1 << CS12);
 
+    while (1) {
+
+    }
+
     return (0);
 }
