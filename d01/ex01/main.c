@@ -23,7 +23,7 @@ int main(void){
     TCCR1A &= ~(1 << WGM10);
     TCCR1A |= (1 << WGM11);
     TCCR1B |= (1 << WGM12) | (1 << WGM13);
-    // Use ICR1 as max value
+    // 2bis. Use ICR1 as max value
     ICR1 = MAX_VAL;
     // 3. Value to compare the timer with
     OCR1A = MAX_VAL * duty_cycle;
