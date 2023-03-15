@@ -4,7 +4,7 @@
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
-#define LOCK_INPUT 25 // time in ms
+#define DEBOUNCING 250 // debouncing delay (in ms)
 
 // globals
 uint8_t         sum = 0;
@@ -39,7 +39,8 @@ ISR(INT0_vect) {
     // update leds
     update_leds();
     // Lock delay to avoid bouncing
-    _delay_ms(LOCK_INPUT);
+    _delay_ms(DEBOUNCING);
+    // Clear External Interrupt Flag
 }
 
 ISR(PCINT2_vect) {
@@ -47,13 +48,14 @@ ISR(PCINT2_vect) {
     ** This function will decrement a sum when it is triggered
     */
 
-    if ((PIND & (1 << PD4)) == 0) {
-        // HIGH to LOW pin change
+    if ((PIND & (1 << PD4)) == 0) { // I use PINX to be clean (could use global)
+        // HIGH to LOW pin change only
         --sum;
         // update leds
         update_leds();
         // Lock delay to avoid bouncing
-        _delay_ms(LOCK_INPUT);
+        _delay_ms(DEBOUNCING);
+        EIFR = (1 << INTF0); // clear external interrupt flag 
     }
 }
 
@@ -63,7 +65,9 @@ void    int_0_conf() {
     */
 
     // 1. Sense control : The low level of INT0 generate interrupt request
-    EICRA &= ~((1 << ISC01) | (1 << ISC00));
+    // EICRA &= ~((1 << ISC01) | (1 << ISC00));
+    EICRA &= ~(1 << ISC00);
+    EICRA |= (1 << ISC01);
     // 2. Enable INT0 interrupt
     EIMSK |= (1 << INT0);
 }
@@ -71,10 +75,10 @@ void    int_0_conf() {
 void    pcint_20_conf() {
     /*
     ** Parameterization of the PCINT20 interrupt
-    ** Carefull : ANY change will trigger the associated ISR
+    ** Carefull : ANY change will trigger the associated ISR (no sense control)
     */
 
-    // Enable PCINT23:16 range interrupts    
+    // Enable PCINT23:16 range interrupts
     PCICR |= (1 << PCIE2);
     // Enable PCINT20 interrupts only
     PCMSK2 = (1 << PCINT20);
@@ -92,7 +96,7 @@ int main(void){
     }
     for (uint8_t i = 0; i < nb_switchs; i++) {
         DDRD &= ~(1 << switchs[i]); // Inputs
-        PORTD &= (1 << switchs[i]);
+        PORTD |= (1 << switchs[i]); // Helps a little bit with bouncing
     }
 
     // Enable global interrupt by setting global interrupt enable bit to 1
