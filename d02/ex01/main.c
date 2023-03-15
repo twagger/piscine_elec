@@ -4,7 +4,7 @@
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
-#define MAX_VAL 65535
+#define MAX_VAL 155 
 
 // Variation direction
 uint8_t dir = 0;
