@@ -5,25 +5,29 @@
 # define F_CPU 16000000UL
 #endif
 #define MAX_VAL 65535
-#define DELAY 10
 
 // Variation direction
 uint8_t dir = 0;
-float   duty_cycle = 0.1;
+float   duty_cycle = 0.00;
 
 // Interrupt Service Routine of timer 0 that triggers on compare match
 ISR(TIMER0_COMPA_vect) {
+    /*
+    ** This should be triggered every 5 milliseconds, so 200 times per second
+    ** which will allow it to update from 0.00 to 1.00 (100 operations) and 
+    ** reverse.
+    */
 
     // update duty_cycle
     if (dir == 0 && duty_cycle < 1) {
-        duty_cycle += 0.1;
+        duty_cycle += 0.01;
     }
     else if (dir == 0 && duty_cycle >= 1) {
         duty_cycle = 1;
         dir = 1;
     }
     else if (dir == 1 && duty_cycle > 0) {
-        duty_cycle -= 0.1;
+        duty_cycle -= 0.01;
     }
     else if (dir == 1 && duty_cycle <= 0) {
         duty_cycle = 0;
@@ -31,14 +35,13 @@ ISR(TIMER0_COMPA_vect) {
     }
     // Update timer 1 compare value
     OCR1A = MAX_VAL * duty_cycle;
-    // Minimun delay between 2 calls to control PB1 duty cycle changes delay
-    _delay_ms(DELAY);
 }
 
 void    timer_1_conf(float duty_cycle) {
     /*
-    This function configures the timer 1 to act on PB1 in a certain way 
-    depending on a duty cycle (managed by OCR1A register).
+    ** This function configures the timer 1 to act on PB1 in a certain way 
+    ** depending on a duty cycle (managed by OCR1A register).
+    ** For the effect to be visible, this timer should update PB1 every
     */
 
     // 1. Action on OC1A (PB1) on compare match. Here : non-inverting Compare
@@ -59,9 +62,9 @@ void    timer_1_conf(float duty_cycle) {
 
 void    timer_0_conf() {
     /*
-    This function configures the timer 0 to produce an interrupt (INT0) on a
-    certain delay that will change the compare value of timer 1 so it changes
-    the behaviour of PB1 led indirectly.
+    ** This function configures the timer 0 to produce an interrupt (INT0) on a
+    ** certain delay that will change the compare value of timer 1 so it changes
+    ** the behaviour of PB1 led indirectly.
     */
 
     // 1. Action on OC0A (PD6) on compare match. Here : nothing
@@ -70,7 +73,7 @@ void    timer_0_conf() {
     TCCR0A |= (1 << WGM01);
     // 3. Value to compare the timer with (here max val as we just want a 
     // regular delay)
-    OCR0A = 251; // This will make the timer 1 tick 31 times per second
+    OCR0A = 38; // This will make the timer 1 tick 200 times per second
     // 4. Interrupts when compare match
     TIMSK0 |= (1 << OCIE0A);
     // 5. Clock prescale factor (1024) + launch the timer
