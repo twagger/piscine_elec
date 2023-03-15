@@ -4,7 +4,7 @@
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
-#define LOCK_INPUT 300 // time in ms
+#define LOCK_INPUT 25 // time in ms
 
 // globals
 uint8_t         sum = 0;
@@ -47,11 +47,14 @@ ISR(PCINT2_vect) {
     ** This function will decrement a sum when it is triggered
     */
 
-    --sum;
-    // update leds
-    update_leds();
-    // Lock delay to avoid bouncing
-    _delay_ms(LOCK_INPUT);
+    if ((PIND & (1 << PD4)) == 0) {
+        // HIGH to LOW pin change
+        --sum;
+        // update leds
+        update_leds();
+        // Lock delay to avoid bouncing
+        _delay_ms(LOCK_INPUT);
+    }
 }
 
 void    int_0_conf() {
@@ -68,6 +71,7 @@ void    int_0_conf() {
 void    pcint_20_conf() {
     /*
     ** Parameterization of the PCINT20 interrupt
+    ** Carefull : ANY change will trigger the associated ISR
     */
 
     // Enable PCINT23:16 range interrupts    
