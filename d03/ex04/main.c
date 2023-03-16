@@ -1,17 +1,81 @@
+// AVR
 #include <avr/io.h>
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
 #define UART_BAUDRATE 115200
-#define BUFFER_SIZE 32
-#define BACKSPACE 8
-#define CR 13
-#define LF 10
 #define __INTR_ATTRS used, externally_visible
 #define ISR(vector, ...) \
         void vector (void) __attribute__ ((signal,__INTR_ATTRS)) __VA_ARGS__; \
         void vector (void)
+// Program specific
+#define BUFFER_SIZE 32
+#define BACKSPACE 127
+#define NEWLINE '\r'
+#define USERNAME 0
+#define PASSWORD 1
 
+// Globals
+volatile static unsigned char   username[BUFFER_SIZE] = "twagner";
+volatile static unsigned char   password[BUFFER_SIZE] = "password";
+volatile static unsigned char   *rx_buffer[2];
+volatile static unsigned char   buffer_username[BUFFER_SIZE];
+volatile static unsigned char   buffer_password[BUFFER_SIZE];
+volatile static uint8_t         curr_buffer = USERNAME;
+
+const uint8_t                   leds[] = {PB0, PB1, PB2, PB4};
+const uint8_t                   nb_leds = sizeof(leds) / sizeof(leds[0]);
+
+// Helper functions
+int	ft_strcmp(const volatile unsigned char *s1, \
+              const volatile unsigned char *s2)
+{
+	while (*s1 || *s2)
+	{
+		if (*s1 != *s2)
+			return (*s1 - *s2);
+		s1++;
+		s2++;
+	}
+	return (0);
+}
+
+void	ft_bzero(volatile void *s, uint32_t n)
+{
+	uint32_t    i;
+
+	i = -1;
+	while (++i < n)
+	{	
+		*((unsigned char *)s) = 0;
+		++s;
+	}
+}
+
+int	ft_strlen(const volatile unsigned char *s)
+{
+	int	i;
+
+	if (!s)
+		return (0);
+	i = 0;
+	while (*(s + i))
+		++i;
+    return (i);
+}
+
+uint32_t    my_log2(uint32_t n) {
+    int result = 0;
+
+    n = n / 2;
+    while (n) {
+        ++result;
+        n = n / 2;
+    }
+    return result;
+}
+
+// UART functions
 void    uart_init(uint32_t baud, uint8_t double_speed) {
     /*
     ** This function initializes UART. The standard steps for init are :
@@ -74,36 +138,119 @@ void    uart_printstr(const char *str) {
     }
 }
 
+// Interrupts
 ISR(USART_RX_vect){
     unsigned char   c;
-    static uint8_t  is_cr = 0;
+    uint32_t        buf_len;
+    static uint8_t  rx_write_pos = 0;
 
+    // Read char from buffer    
     c = UDR0;
+
+    // Save char into the proper buffer and display it
     if (c == BACKSPACE) {
-        uart_tx((unsigned char)127)
+        if (rx_write_pos != 0) {
+            --rx_write_pos;
+            rx_buffer[curr_buffer][rx_write_pos] = '\0';
+            uart_printstr("\r\033[2K");
+            if (curr_buffer == USERNAME) {
+                uart_printstr("\tusername:");
+                uart_printstr(rx_buffer[curr_buffer]);
+            }
+            else {
+                uart_printstr("\tpassword:");
+                buf_len = ft_strlen(rx_buffer[curr_buffer]);
+                for (uint32_t i = 0; i < buf_len; i++) {
+                    uart_tx('*');
+                }
+            }
+        }
     }
-    else if (c == CR) {
-        is_cr = 1;
-    }
-    else if (c == LF && is_cr == 1) {
-        uart_tx('\n');
+    else if (c == NEWLINE) {
+        curr_buffer ^= 1;
+        rx_write_pos = 0;
+        uart_printstr("\r\n");
     }
     else {
-        uart_tx(c);
+        rx_buffer[curr_buffer][rx_write_pos] = c;
+        if (curr_buffer == PASSWORD) {
+            uart_tx('*');
+        }
+        else {
+            uart_tx(c);
+        }
+        ++rx_write_pos;
+    }
+    
+    // Overflow management : restart to pos 0
+    if (rx_write_pos >= BUFFER_SIZE) {
+        rx_write_pos = 0;
     }
 }
 
-char    ask_username(char **in_username) {
-    uart_printstr("Enter your login:\n");
-    uart_printstr("\tusername:");
+// Interrupt Service Routine of timer 0 that triggers on compare match
+ISR(TIMER1_COMPA_vect)
+{
+    /*
+    ** This is triggered every time timer1 comp A match
+    */
+
+    // Transmit hello world!
+    for (uint8_t i = 0; i < nb_leds; i++) {
+        // Toogle lights
+        PORTB ^= (1 << leds[i]);      
+    }
 }
 
-int main(void){
+void    timer_1_conf(uint16_t prescale, uint8_t int_delay) {
+    /*
+    ** This function configures the timer 1 to act on PB1 in a certain way 
+    ** depending on a duty cycle (managed by OCR1A register).
+    ** For the effect to be visible, this timer should update PB1 every
+    */
 
-    char    username[BUFFER_SIZE] = {"twagner"};
-    char    password[BUFFER_SIZE] = {"password"};
-    char    in_username[BUFFER_SIZE];
-    char    in_password[BUFFER_SIZE];
+    // 1. Action on OC1A (PB1) on compare match. Here : nothing
+    TCCR1A &= ~((1 << COM1A0) | (1 << COM1A1));
+    // 2. Waveform Generation Mode: CTC
+    TCCR1B |= (1 << WGM12);
+    // 3. Value to compare the timer with
+    OCR1A = (F_CPU / (2 * 256 * (int_delay / 4)) - 1);
+    // 4. Enable and configure timer 1 interrupt
+    TIMSK1 |= (1 << OCIE1A);
+    // 4. Clock prescale factor + launch the timer
+    TCCR1B |= ((uint32_t)(my_log2(prescale) / 2) << CS10);
+}
+
+// Program helpers
+void    ask_username() {
+    ft_bzero(buffer_username, BUFFER_SIZE);
+    uart_printstr("Enter your login:\n\r");
+    uart_printstr("\tusername:");
+    while (curr_buffer == USERNAME)
+        ;
+}
+
+void    ask_password() {
+    ft_bzero(buffer_password, BUFFER_SIZE);
+    uart_printstr("\tpassword:");
+    while (curr_buffer == PASSWORD)
+        ;
+}
+
+void    welcome(){
+    uart_printstr("Hello spectre!\n\r");
+    uart_printstr("Shall we play a game?\n\r");
+}
+
+void    display_error(){
+    uart_printstr("Bad combinaison username/password\n\n\r");
+}
+
+// Main
+int main(void){
+    
+    rx_buffer[USERNAME] = (unsigned char *)&buffer_username;
+    rx_buffer[PASSWORD] = (unsigned char *)&buffer_password;
 
     // Initialize UART
     uart_init(UART_BAUDRATE, 0);
@@ -111,24 +258,32 @@ int main(void){
     // Loop to ask login / pass
     while (1) {
         // Ask username and password
-        ask_username((char **)&in_username);
-        // ask_password((char **)&in_password);
-        // // Compare input username and password with stored ones
-        // if (strcmp(in_username, username) == 0 \
-        //     && strcmp(in_password, password) == 0) {
-        //     welcome();
-        //     break;
-        // }
-        // else {
-        //     display_error();
-        // }
+        ask_username();
+        ask_password();
+        // Compare input username and password with stored ones
+        if (ft_strcmp(rx_buffer[USERNAME], username) == 0 \
+            && ft_strcmp(rx_buffer[PASSWORD], password) == 0) {
+            welcome();
+            break;
+        }
+        else {
+            display_error();
+        }
     }
 
-    // Loop if good login / pass
+    // Del init
+    for (uint8_t i = 0; i < nb_leds; i++) {
+        DDRB |= (1 << leds[i]); // Outputs
+        PORTB &= ~(1 << leds[i]); // Init
+    }
+
+    // Conf timer 1
+    timer_1_conf(256, 4);
+
+    // Reward loop
     while (1) {
-        // Make the leds blink
+        
     }
-
 
     return (0);
 }
