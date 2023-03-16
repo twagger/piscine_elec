@@ -43,7 +43,7 @@ ISR(INT0_vect) {
     // Clear External Interrupt Flag
 }
 
-ISR(PCINT2_vect) {
+ISR(PCINT2_vect){
     /*
     ** This function will decrement a sum when it is triggered
     */

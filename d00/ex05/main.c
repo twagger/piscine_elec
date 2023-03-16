@@ -28,7 +28,7 @@ int main(void){
     }
     for (uint8_t i = 0; i < nb_switchs; i++) {
         DDRD &= ~(1 << switchs[i]); // Inputs
-        PORTD &= (1 << switchs[i]);
+        PORTD |= (1 << switchs[i]); // Helps a little bit with bouncing
     }
 
     sum = 0;

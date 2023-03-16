@@ -3,6 +3,10 @@
 # define F_CPU 16000000UL
 #endif
 #define UART_BAUDRATE 115200
+#define BUFFER_SIZE 32
+#define BACKSPACE 8
+#define CR 13
+#define LF 10
 #define __INTR_ATTRS used, externally_visible
 #define ISR(vector, ...) \
         void vector (void) __attribute__ ((signal,__INTR_ATTRS)) __VA_ARGS__; \
@@ -63,30 +67,68 @@ unsigned char   uart_rx(void) {
     return UDR0;
 }
 
-unsigned char   convert_maj_min(unsigned char c) {
-    if (c >= 65 && c <= 90) {
-        return c + 32;
+void    uart_printstr(const char *str) {
+    while (*str){
+        uart_tx(*str);
+        ++str;
     }
-    else if (c >= 97 && c <= 122) {
-        return c - 32;
-    }
-    return c;
 }
 
 ISR(USART_RX_vect){
     unsigned char   c;
+    static uint8_t  is_cr = 0;
 
     c = UDR0;
-    uart_tx(convert_maj_min(c));
+    if (c == BACKSPACE) {
+        uart_tx((unsigned char)127)
+    }
+    else if (c == CR) {
+        is_cr = 1;
+    }
+    else if (c == LF && is_cr == 1) {
+        uart_tx('\n');
+    }
+    else {
+        uart_tx(c);
+    }
+}
+
+char    ask_username(char **in_username) {
+    uart_printstr("Enter your login:\n");
+    uart_printstr("\tusername:");
 }
 
 int main(void){
 
+    char    username[BUFFER_SIZE] = {"twagner"};
+    char    password[BUFFER_SIZE] = {"password"};
+    char    in_username[BUFFER_SIZE];
+    char    in_password[BUFFER_SIZE];
+
     // Initialize UART
     uart_init(UART_BAUDRATE, 0);
 
-    while (1)
-        ;
+    // Loop to ask login / pass
+    while (1) {
+        // Ask username and password
+        ask_username((char **)&in_username);
+        // ask_password((char **)&in_password);
+        // // Compare input username and password with stored ones
+        // if (strcmp(in_username, username) == 0 \
+        //     && strcmp(in_password, password) == 0) {
+        //     welcome();
+        //     break;
+        // }
+        // else {
+        //     display_error();
+        // }
+    }
+
+    // Loop if good login / pass
+    while (1) {
+        // Make the leds blink
+    }
+
 
     return (0);
 }
