@@ -12,8 +12,10 @@
 uint32_t    my_log2(uint32_t n) {
     int result = 0;
 
-    while ((uint32_t)n / 2) {
+    n = n / 2;
+    while (n) {
         ++result;
+        n = n / 2;
     }
     return result;
 }
@@ -93,8 +95,7 @@ void    timer_1_conf(uint16_t prescale, uint8_t int_delay) {
     // 4. Enable and configure timer 1 interrupt
     TIMSK1 |= (1 << OCIE1A);
     // 4. Clock prescale factor + launch the timer
-    // TCCR1B |= ((uint32_t)(my_log2(prescale) / 2) << CS10);
-    TCCR1B |= (1 << CS12);
+    TCCR1B |= ((uint32_t)(my_log2(prescale) / 2) << CS10);
 }
 
 int main(void){
