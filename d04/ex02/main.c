@@ -3,6 +3,7 @@
 #include <util/twi.h>
 #include <util/delay.h>
 #include <stdlib.h>
+#include <math.h>
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
@@ -42,7 +43,7 @@ static uint8_t          meaner = 0;
 
 /*
 ** -----------------------------------------------------------------------------
-** UAR Functions
+** UART Functions
 ** -----------------------------------------------------------------------------
 */
 void    uart_init(uint32_t baud, uint8_t double_speed) {
@@ -135,22 +136,6 @@ void    ft_byte_printer(unsigned char c) {
     }
     uart_tx('\n');
     uart_tx('\r');
-}
-
-int		ft_pow(int i, int p){
-	int j;
-	int result;
-
-	j = 1;
-	result = i;
-	if (p == 0)
-		return (1);
-	while (j < p)
-	{
-		result = result * i;
-		j++;
-	}
-	return (result);
 }
 
 /*
@@ -338,20 +323,20 @@ void    read_measurement(){
             tmp = i2c_read();
             // save tmp in temp / hum array
             if (i == 1) {
-                hums[meaner] = tmp;
+                hums[meaner % 3] = tmp;
             }
             if (i == 2) {
-                hums[meaner] = hums[meaner] << 8 | tmp;
+                hums[meaner % 3] = hums[meaner % 3] << 8 | tmp;
             }
             if (i == 3) {
-                hums[meaner] = hums[meaner] << 4 | tmp >> 4;
-                temps[meaner] = tmp & 0xF ;
+                hums[meaner % 3] = hums[meaner % 3] << 4 | tmp >> 4;
+                temps[meaner % 3] = tmp & 0xF ;
             }
             if (i == 4) {
-                temps[meaner] = temps[meaner] << 8 | tmp;
+                temps[meaner % 3] = temps[meaner % 3] << 8 | tmp;
             }
             if (i == 5) {
-                temps[meaner] = temps[meaner] << 8 | tmp;
+                temps[meaner % 3] = temps[meaner % 3] << 8 | tmp;
             }
             // send ack and check
             TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
@@ -373,8 +358,8 @@ void    read_measurement(){
 */
 int main(void){
 
-    float   temp = 0;
-    float   hum = 0;
+    float   temp = 0.0;
+    float   hum = 0.0;
     char    a_temp[25];
     char    a_hum[5];
 
@@ -406,27 +391,21 @@ int main(void){
         if (i2c_error) { return (1); }
 
         // Display temp
-        if (meaner % 3 == 0){
+        if (meaner % 3 == 0 && meaner != 0){ //error
             // mean the temp and humidity
             temp = (temps[0] + temps[1] + temps[2]) / 3;
-            uart_printstr(dtostrf(temps[0], 20, 4, a_temp));
-            uart_printstr(dtostrf(temps[1], 20, 4, a_temp));
-            uart_printstr(dtostrf(temps[2], 20, 4, a_temp));
-            temp = (temp / ft_pow(2, 20)) * 200 - 50;
+            uart_printstr(dtostrf(temps[0], 4, 0, a_temp));
+            temp = (temp / pow(2,20)) * 200 - 50;
             hum = (hums[0] + hums[1] + hums[2]) / 3;
-            hum = (hum / ft_pow(2, 20)) * 100;
+            hum = (hum / pow(2,20)) * 100;
             // display temp and humidity
             uart_printstr("Temperature: ");
-            uart_printstr(dtostrf(temp, 3, 0, a_temp));
-            uart_printstr("C, Humidity: ");
+            uart_printstr(dtostrf(temp, 4, 0, a_temp));
+            uart_printstr(".C, Humidity: ");
             uart_printstr(dtostrf(hum, 4, 1, a_hum));
             uart_printstr("%\n\r");
-            // reset meaner
-            meaner = 0;
         }
-        else {
-            ++meaner;
-        }
+        ++meaner;
 
         // Delay to have time to read the temperature on the screen
         _delay_ms(3000);
