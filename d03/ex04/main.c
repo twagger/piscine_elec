@@ -141,7 +141,6 @@ void    uart_printstr(const char *str) {
 // Interrupts
 ISR(USART_RX_vect){
     unsigned char   c;
-    uint32_t        buf_len;
     static uint8_t  rx_write_pos = 0;
 
     // Read char from buffer    
@@ -151,20 +150,8 @@ ISR(USART_RX_vect){
     if (c == BACKSPACE) {
         if (rx_write_pos != 0) {
             --rx_write_pos;
-            // Better solution : display '\b' then space then '\b' again
             rx_buffer[curr_buffer][rx_write_pos] = '\0';
-            uart_printstr("\r\033[2K");
-            if (curr_buffer == USERNAME) {
-                uart_printstr("\tusername:");
-                uart_printstr(rx_buffer[curr_buffer]);
-            }
-            else {
-                uart_printstr("\tpassword:");
-                buf_len = ft_strlen(rx_buffer[curr_buffer]);
-                for (uint32_t i = 0; i < buf_len; i++) {
-                    uart_tx('*');
-                }
-            }
+            uart_printstr("\b \b");
         }
     }
     else if (c == NEWLINE) {
