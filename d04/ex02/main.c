@@ -300,7 +300,8 @@ void    read_measurement(){
     /*
     ** Read the measurement from the sensor
     */
-    unsigned char tmp;
+    unsigned char   tmp;
+    uint8_t         index;
 
     // Start in read mode
     i2c_start(SENSOR_R, TW_MR_SLA_ACK);
@@ -321,23 +322,14 @@ void    read_measurement(){
             }
         } else {
             tmp = i2c_read();
-            // save tmp in temp / hum array
-            if (i == 1) {
-                hums[meaner % 3] = tmp;
-            }
-            if (i == 2) {
-                hums[meaner % 3] = hums[meaner % 3] << 8 | tmp;
-            }
-            if (i == 3) {
-                hums[meaner % 3] = hums[meaner % 3] << 4 | tmp >> 4;
-                temps[meaner % 3] = tmp & 0xF ;
-            }
-            if (i == 4) {
-                temps[meaner % 3] = temps[meaner % 3] << 8 | tmp;
-            }
-            if (i == 5) {
-                temps[meaner % 3] = temps[meaner % 3] << 8 | tmp;
-            }
+            index = meaner % 3;
+            // save tmp in humidity / temperature array
+            if (i == 1) { hums[index] = tmp; }
+            if (i == 2) { hums[index] = (hums[index] << 8) | tmp; }
+            if (i == 3) { hums[index] = (hums[index] << 4) | (tmp >> 4);
+                          temps[index] = tmp & 0xF; }
+            if (i == 4) { temps[index] = (temps[index] << 8) | tmp; }
+            if (i == 5) { temps[index] = (temps[index] << 8) | tmp; }
             // send ack and check
             TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
             wait_for_transmission();
@@ -391,7 +383,7 @@ int main(void){
         if (i2c_error) { return (1); }
 
         // Display temp
-        if (meaner % 3 == 0 && meaner != 0){ //error
+        if (index == 0 && meaner != 0){ //error
             // mean the temp and humidity
             temp = (temps[0] + temps[1] + temps[2]) / 3;
             uart_printstr(dtostrf(temps[0], 4, 0, a_temp));
