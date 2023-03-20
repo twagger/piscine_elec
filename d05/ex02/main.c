@@ -3,6 +3,7 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 #include <util/twi.h>
+#include <stdbool.h>
 #ifndef F_CPU
 # define F_CPU 16000000UL
 #endif
@@ -227,11 +228,15 @@ bool    is_my_magic(size_t offset, uint8_t my_magic){
 bool    safe_eeprom_read(void *buffer, size_t offset, size_t length){
     /*
     ** read data IF they have been written by me (check with my magic number)
+    ** 
+    ** - buffer : the destination of the readed data
+    ** - offset : the memory offset (starting from 0)
+    ** - length : the length of the data to read
     */
 
     if (is_my_magic(offset, MAGIC)){
         // The read is safe, load the buffer
-        eeprom_read_block(buffer, offset, length);
+        eeprom_read_block((void *)buffer, (const void *)offset, length);
         return (1);
     }
     else {
@@ -251,7 +256,7 @@ bool    safe_eeprom_write(void *buffer, size_t offset, size_t length){
     ** - length : the length of the data to write
     */
     
-    void    *tmp_buffer;
+    void    *tmp_buffer = NULL;
 
     // If I cannot add magic for the address
     if (offset <= 0){
@@ -263,15 +268,13 @@ bool    safe_eeprom_write(void *buffer, size_t offset, size_t length){
         // Rewrite only if data is different
         if (ft_strncmp(tmp_buffer, buffer, length) != 0) {
             eeprom_write_block((const void *)buffer, (void *)(offset), length);
-            return (1);
         }
     }
     else {
-        // The data are not writtend by me : overwrite the magic with mine
-        eeprom_write_byte((uint8_t *)(offset - i), MAGIC);
-        eeprom_write_block((const void *)buffer, (void *)(offset), length);
-        return (1);
+        // The data are not writtend by me : I respect that and I leave
+        return (0);
     }
+    return (1);
 }
 
 /*
