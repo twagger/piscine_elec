@@ -350,8 +350,8 @@ void    read_measurement(){
 */
 int main(void){
 
-    float   temp = 0.0;
-    float   hum = 0.0;
+    float   temperature = 0.0;
+    float   humidity = 0.0;
     char    a_temp[25];
     char    a_hum[5];
 
@@ -383,18 +383,17 @@ int main(void){
         if (i2c_error) { return (1); }
 
         // Display temp
-        if (index == 0 && meaner != 0){ //error
+        if (meaner != 0 && meaner % 3 == 0){ //error
             // mean the temp and humidity
-            temp = (temps[0] + temps[1] + temps[2]) / 3;
-            uart_printstr(dtostrf(temps[0], 4, 0, a_temp));
-            temp = (temp / pow(2,20)) * 200 - 50;
-            hum = (hums[0] + hums[1] + hums[2]) / 3;
-            hum = (hum / pow(2,20)) * 100;
+            temperature = (temps[0] + temps[1] + temps[2]) / 3;
+            temperature = (temperature / pow(2,20)) * 200 - 50;
+            humidity = (hums[0] + hums[1] + hums[2]) / 3;
+            humidity = (humidity / pow(2,20)) * 100;
             // display temp and humidity
             uart_printstr("Temperature: ");
-            uart_printstr(dtostrf(temp, 4, 0, a_temp));
+            uart_printstr(dtostrf(temperature, 3, 0, a_temp));
             uart_printstr(".C, Humidity: ");
-            uart_printstr(dtostrf(hum, 4, 1, a_hum));
+            uart_printstr(dtostrf(humidity, 4, 1, a_hum));
             uart_printstr("%\n\r");
         }
         ++meaner;
