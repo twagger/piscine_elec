@@ -139,7 +139,6 @@ uint32_t    hexstr_to_int(volatile unsigned char *str){
     uint32_t    base = 1;
 
 	for (uint8_t i = BUFFER_SIZE - 1; i > 0; i--){
-        uart_tx(str[i]);
         if (str[i] >= '0' && str[i] <= '9') {
             res += (str[i] - 48) * base;
             base *= 16;
