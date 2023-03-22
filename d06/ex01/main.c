@@ -28,6 +28,7 @@
 ** Globals
 ** -----------------------------------------------------------------------------
 */
+volatile const uint32_t leds[3] = {DEL_RED, DEL_GREEN, DEL_BLUE};
 volatile const uint32_t rgb[7] = {RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, \
                                   WHITE};
 volatile uint8_t        current_color = 0;
@@ -161,11 +162,11 @@ void    init_rgb(void){
     ** Set the led as output and turn them off
     */
 
-    const uint8_t   nb_rgb = sizeof(rgb) / sizeof(rgb[0]);
+    const uint8_t   nb_rgb = sizeof(leds) / sizeof(leds[0]);
 
     for (uint8_t i = 0; i < nb_rgb; i++) {
-        DDRD |= (1 << rgb[i]); // Output
-        PORTD &= ~(1 << rgb[i]); // Off by default
+        DDRD |= (1 << leds[i]); // Output
+        PORTD &= ~(1 << leds[i]); // Off by default
     }
 }
 

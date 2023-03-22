@@ -29,24 +29,24 @@
 volatile uint8_t        counter[NB_COUNTERS];
 volatile uint8_t        selected = 0;
 volatile const uint8_t  leds[] = {PB0, PB1, PB2, PB4};
-static uint8_t          i2c_error = 0;
-static const uint8_t    debug = 0;
-static const char       *status_mess[] = {\
-                             "A START condition has been transmitted", \
-                             "SLA+W has been transmitted; ACK received", \
-                             "SLA+R has been transmitted; ACK received", \
-                             "Data byte has been transmitted; ACK received", \
-                             "A repeated START condition has been transmitted"};
-static const uint8_t    status_codes[] = {TW_START, TW_MT_SLA_ACK,
-                                          TW_MR_SLA_ACK, TW_MT_DATA_ACK,
-                                          TW_REP_START};
+// static uint8_t          i2c_error = 0;
+// static const uint8_t    debug = 0;
+// static const char       *status_mess[] = {\
+//                              "A START condition has been transmitted", \
+//                              "SLA+W has been transmitted; ACK received", \
+//                              "SLA+R has been transmitted; ACK received", \
+//                              "Data byte has been transmitted; ACK received", \
+//                              "A repeated START condition has been transmitted"};
+// static const uint8_t    status_codes[] = {TW_START, TW_MT_SLA_ACK,
+//                                           TW_MR_SLA_ACK, TW_MT_DATA_ACK,
+//                                           TW_REP_START};
 
-// Enums
-enum    e2i_options{
-    OPT_DATA = 0,
-    OPT_START,
-    OPT_STOP,
-};
+// // Enums
+// enum    e2i_options{
+//     OPT_DATA = 0,
+//     OPT_START,
+//     OPT_STOP,
+// };
 
 /*
 ** -----------------------------------------------------------------------------

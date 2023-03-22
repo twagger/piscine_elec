@@ -31,16 +31,17 @@ volatile uint8_t        selected = 0;
 volatile const uint8_t  leds[] = {PB0, PB1, PB2, PB4};
 volatile const uint8_t  i2c_leds[] = {1, 2, 3};
 static uint8_t          i2c_error = 0;
-static const uint8_t    debug = 0;
+static const uint8_t    debug = 1;
 static const char       *status_mess[] = {\
                              "A START condition has been transmitted", \
                              "SLA+W has been transmitted; ACK received", \
                              "SLA+R has been transmitted; ACK received", \
                              "Data byte has been transmitted; ACK received", \
-                             "A repeated START condition has been transmitted"};
+                             "A repeated START condition has been transmitted", \
+                             "Data byte has been received; NOT ACK has been returned"};
 static const uint8_t    status_codes[] = {TW_START, TW_MT_SLA_ACK,
                                           TW_MR_SLA_ACK, TW_MT_DATA_ACK,
-                                          TW_REP_START};
+                                          TW_REP_START, TW_MR_DATA_NACK};
 
 // Enums
 enum    e2i_options{
@@ -239,10 +240,6 @@ void    i2c_init(void){
     ** - Communication frequency : 100kHz
     */
 
-    // Enable ACK bit
-    // Maybe to do 
-    // TWCR |= (1 << TWEA);
-
     // Configure prescale and bit rate for 100kHz
     TWSR &= ~((1 << TWPS0) | (1 << TWPS1));
     TWBR = 72;
@@ -301,6 +298,9 @@ void    i2c_stop(void){
     */
 
     send_to_i2c(OPT_STOP, 0, 0);
+    if (debug) {
+        uart_printstr("A STOP condition has been transmitted\n\r\n\r");
+    }
 }
 
 void    send_nack(void){
@@ -348,7 +348,6 @@ uint8_t check_sw3(void){
     */
 
     uint8_t reg_value;
-    uint8_t reg_value2;
 
     // Start in Write mode to specify what we want to read
     i2c_start(EXPANDER_W, TW_MT_SLA_ACK);
@@ -367,7 +366,7 @@ uint8_t check_sw3(void){
 
     // Read the value of register
     reg_value = i2c_read();
-
+    _delay_ms(5000);
     // Send NACK
     send_nack();
     if (i2c_error) { return (2); }
@@ -453,6 +452,7 @@ int main(void){
 
     while (1) {
         if (check_sw3() == 1){ // SW3 is pressed
+            uart_printstr("***************************\n\r");
             selected = (selected + 1 >= NB_COUNTERS) ? 0 : selected + 1;
             display_bin(counter[selected]);
             display_i2e_bin(selected + 1);
