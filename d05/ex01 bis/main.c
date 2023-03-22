@@ -454,7 +454,6 @@ int main(void){
 
     while (1) {
         if (check_sw3() == 1){ // SW3 is pressed
-            uart_printstr("***************************\n\r");
             selected = (selected + 1 >= NB_COUNTERS) ? 0 : selected + 1;
             display_bin(counter[selected]);
             // display_i2e_bin(selected + 1);
