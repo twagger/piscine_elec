@@ -231,7 +231,6 @@ void    init_leds(void){
 void    display_level(uint8_t level){
     
     uint8_t percentage = ((float)level / 255.0) * 100;
-
     for (uint8_t i = 0; i < nb_leds; i++) {
         if (percentage >= (i + 1) * 25) {
             PORTB |= (1 << led[i]); // On
@@ -247,8 +246,7 @@ void    display_level(uint8_t level){
 ** -----------------------------------------------------------------------------
 */
 
-ISR(ADC_vect)
-{
+ISR(ADC_vect){
     /*
     ** ADC conversion complete
     */
@@ -293,7 +291,7 @@ ISR(TIMER2_OVF_vect){
 ** -----------------------------------------------------------------------------
 */
 
-void    timer_0_conf() {
+void    timer_0_conf(uint16_t prescale) {
     /*
     ** This function configures the timer 0.
     **
@@ -308,11 +306,12 @@ void    timer_0_conf() {
     OCR0A = MAX_VAL_0;
     // 3. Interrupts when compare match and overflow
     TIMSK0 |= (1 << OCIE0A) | (1 << TOIE0);
-    // 4. Clock prescale factor (1024) + launch the timer
-    TCCR0B |= (1 << CS02) | (1 << CS00);
+    // 4. Clock prescale factor
+    // TCCR0B |= (1 << CS02) | (1 << CS00);
+    TCCR0B |= ((uint32_t)(my_log2(prescale) / 2) << CS00);
 }
 
-void    timer_1_conf(void) {
+void    timer_1_conf(uint16_t prescale) {
     /*
     ** This function configures the timer 1.
     **
@@ -335,11 +334,12 @@ void    timer_1_conf(void) {
     TIMSK1 |= (1 << OCIE1A) | (1 << TOIE1);
     // 4. Value to compare the timer with
     OCR1A = MAX_VAL_1;
-    // 5. Clock prescale factor (256) + launch the timer
-    TCCR1B |= (1 << CS12);
+    // 5. Clock prescale factor
+    // TCCR1B |= (1 << CS12);
+    TCCR1B |= ((uint32_t)(my_log2(prescale) / 2) << CS10);
 }
 
-void    timer_2_conf() {
+void    timer_2_conf(uint16_t prescale) {
     /*
     ** This function configures the timer 2.
     **
@@ -354,8 +354,9 @@ void    timer_2_conf() {
     OCR2A = MAX_VAL_2;
     // 3. Interrupts when compare match and overflow
     TIMSK2 |= (1 << OCIE2A) | (1 << TOIE2);
-    // 4. Clock prescale factor (1024) + launch the timer
-    TCCR2B |= (1 << CS22) | (1 << CS20);
+    // 4. Clock prescale factor
+    // TCCR2B |= (1 << CS22) | (1 << CS20);
+    TCCR2B |= ((uint32_t)(my_log2(prescale) / 2) << CS20);
 }
 
 /*
@@ -377,9 +378,9 @@ void    init_rgb(void){
     }
 
     // Initialize the timers
-    timer_0_conf();
-    timer_1_conf();
-    timer_2_conf();
+    timer_0_conf(1024);
+    timer_1_conf(256);
+    timer_2_conf(1024);
 }
 
 void    set_rgb(uint8_t r, uint8_t g, uint8_t b){
