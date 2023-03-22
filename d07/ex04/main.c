@@ -231,6 +231,7 @@ void    init_leds(void){
 void    display_level(uint8_t level){
     
     uint8_t percentage = ((float)level / 255.0) * 100;
+    
     for (uint8_t i = 0; i < nb_leds; i++) {
         if (percentage >= (i + 1) * 25) {
             PORTB |= (1 << led[i]); // On
@@ -253,7 +254,7 @@ ISR(ADC_vect){
 
     // Read the value of ADC register and update global variable with it
     position = ADCH;
-    // Display level using leds (25% 50% 75% 100%)
+    // Display level using 4 leds (25% 50% 75% 100%)
     display_level(position);
     // Clear the ADIF flag with logical 1 to disable pending interrupts
     ADCSRA |= (1 << ADIF);

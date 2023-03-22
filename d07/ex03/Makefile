@@ -35,7 +35,7 @@ hex:			$(OBJS)
 
 .PHONY:			flash
 flash:
-				$(BURN) $(BURNFLAGS) -U flash:w:$(HEX_FILE):i -P $(PORT)
+				$(BURN) $(BURNFLAGS) -U flash:w:$(HEX_FILE):i -P $(PORT) -U signature:r:dump.hex:i
 
 .PHONY:			clean
 clean:			

@@ -244,8 +244,8 @@ ISR(ADC_vect)
     /*
     ** ADC conversion complete
     */
-    // uint8_t ts_gain = boot_signature_byte_get(TS_GAIN);
-    // uint8_t ts_offset = boot_signature_byte_get(TS_OFFSET);
+    uint8_t ts_gain = boot_signature_byte_get(TS_GAIN);
+    uint8_t ts_offset = boot_signature_byte_get(TS_OFFSET);
 
     // Read the value of ADC register and update global variable with it
     value = ADC;
@@ -255,10 +255,10 @@ ISR(ADC_vect)
     value = (value - 324.31) / 1.22;
 
     // Debug
-    // uart_byte_printer(ts_gain);
-    // uart_byte_printer(ts_offset);
-    // uart_byte_printer(value & 0xFF);
-    // uart_byte_printer((value >> 8) & 0xFF);
+    uart_byte_printer(ts_gain);
+    uart_byte_printer(ts_offset);
+    uart_byte_printer(value & 0xFF);
+    uart_byte_printer((value >> 8) & 0xFF);
     _delay_ms(1000);
 
 
