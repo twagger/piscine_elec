@@ -181,12 +181,29 @@ void    display_byte_hexa(uint16_t byte){
     */
 
     char    *base = "0123456789abcdef";
-    char    result[4] = {'0','0','0', 0};
+    char    result[4] = {'0', '0', '0', 0};
     uint8_t i = 2;
 
     while (byte) {
         result[i] = base[byte % 16];
         byte /= 16;
+        i--;
+    }
+    uart_printstr(result);
+}
+
+void    display_byte_decimal(uint16_t byte){
+    /*
+    ** Displays a byte in hexa using uart rx
+    */
+
+    char    *base = "0123456789";
+    char    result[5] = {'0', '0', '0', '0', 0};
+    uint8_t i = 3;
+
+    while (byte) {
+        result[i] = base[byte % 10];
+        byte /= 10;
         i--;
     }
     uart_printstr(result);
@@ -205,7 +222,7 @@ ISR(TIMER1_COMPA_vect)
 
     // Display values
     for (uint8_t i = 0; i < 3; i++) {
-        display_byte_hexa(value[i]);
+        display_byte_decimal(value[i]);
         if (i != 2) {
             uart_printstr(", ");
         } else {
