@@ -31,7 +31,7 @@ volatile uint8_t        selected = 0;
 volatile const uint8_t  leds[] = {PB0, PB1, PB2, PB4};
 volatile const uint8_t  i2c_leds[] = {1, 2, 3};
 static uint8_t          i2c_error = 0;
-static const uint8_t    debug = 1;
+static const uint8_t    debug = 0;
 static const char       *status_mess[] = {\
                              "A START condition has been transmitted", \
                              "SLA+W has been transmitted; ACK received", \
@@ -189,6 +189,8 @@ int check_for_status(uint8_t expected){
     if ((TWSR & 0xF8) != expected){
         // push error to screen
         uart_printstr("Error");
+        uart_byte_printer((TWSR & 0xF8));
+        uart_byte_printer(expected);
         i2c_error = 1;
         return (1);
     }
@@ -211,14 +213,15 @@ void    send_to_i2c(uint8_t option, unsigned char data, uint8_t expected){
 
     // START / STOP / RESTART
     if (option == OPT_START) {
-        TWCR |= (1 << TWSTA) | (1 << TWINT) | (1 << TWEN);
+        TWCR = (1 << TWINT) | (1 << TWSTA)| (1 << TWEN);
         wait_for_transmission();
         if (check_for_status(expected) == 1) {
             return;
         }
     }
     else if (option == OPT_STOP) {
-        TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
+        TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+        _delay_ms(0.01); // to be sure the bus is idle for the next start
     }
     else if (option == OPT_DATA) {
         // DATA
@@ -279,7 +282,6 @@ void    i2c_write(unsigned char data){
     */
 
     send_to_i2c(OPT_DATA, data, TW_MT_DATA_ACK);
-    if (i2c_error) { return; }
 }
 
 uint8_t i2c_read(void){
@@ -326,11 +328,11 @@ void    init_i2e_expander(void){
     if (i2c_error) { return; }
 
     // Configure SW3 as input and DELS as output
-    i2c_write(0x06); // configuration port 0
+    i2c_write(6); // configuration port 0
     if (i2c_error) { return; }
 
     // Configuration data
-    i2c_write(0xF1); // SW3 input, LEDS output
+    i2c_write(1); // SW3 input, LEDS output
     if (i2c_error) { return; }
 
     // Stop i2c
@@ -358,18 +360,18 @@ uint8_t check_sw3(void){
     if (i2c_error) { return (2); }
 
     // Stop i2c
-    i2c_stop();
+    // i2c_stop();
 
     // Start in read mode to read the data from register
-    i2c_start(EXPANDER_R, TW_MR_SLA_ACK);
+    i2c_repeat_start(EXPANDER_R, TW_MR_SLA_ACK);
+    if (i2c_error) { return (2); }
+
+    // Send NACK to stop after one byte sent from I2C expander
+    send_nack();
     if (i2c_error) { return (2); }
 
     // Read the value of register
     reg_value = i2c_read();
-    _delay_ms(5000);
-    // Send NACK
-    send_nack();
-    if (i2c_error) { return (2); }
 
     // Stop i2c
     i2c_stop();
@@ -448,14 +450,14 @@ int main(void){
 
     // Initial display number and counter num
     display_bin(counter[selected]);
-    display_i2e_bin(selected + 1);
+    // display_i2e_bin(selected + 1);
 
     while (1) {
         if (check_sw3() == 1){ // SW3 is pressed
             uart_printstr("***************************\n\r");
             selected = (selected + 1 >= NB_COUNTERS) ? 0 : selected + 1;
             display_bin(counter[selected]);
-            display_i2e_bin(selected + 1);
+            // display_i2e_bin(selected + 1);
             _delay_ms(DEBOUNCING);
         }
     }
