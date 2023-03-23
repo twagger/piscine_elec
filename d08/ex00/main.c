@@ -211,9 +211,6 @@ void    spi_d6(uint32_t color, uint8_t brightness){
     */
 
     spi_apa102_start_frame();
-    uart_byte_printer((color >> 16) & 0xFF);
-    uart_byte_printer((color >> 8) & 0xFF);
-    uart_byte_printer(color & 0xFF);
 
     // display color with d6
     spi_write((uint8_t)(7 << 5) | (brightness & 0x1F));
