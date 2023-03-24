@@ -459,9 +459,14 @@ ISR(ADC_vect){
     /*
     ** ADC conversion complete
     */
-    uart_printstr("OK\n\r");
     // Read the value of ADC register and update global variable with it
-    value = ADC;
+    value = ADCL;
+    value = value | ADCH << 8;
+    // Update 7seg
+    display_one_digit_7seg(value % 10, 1);
+    display_one_digit_7seg((value / 10) % 10, 2);
+    display_one_digit_7seg((value / 100) % 10, 3);
+    display_one_digit_7seg((value / 1000) % 10, 4);
     // Clear the ADIF flag with logical 1 to disable pending interrupts
     ADCSRA |= (1 << ADIF);
     // Start a new conversion
@@ -490,11 +495,12 @@ int main(void){
     adc_init();
     start_conversion();
 
-    // Start a timer to refresh the 7sec
-    timer_0_conf(1024);
+    // Start a timer to refresh the 7sec > conflict with ADC interrupts ?
+    // timer_0_conf(1024);
 
     // Loop
     while (1) {
+        
     }
 
     return (0);
