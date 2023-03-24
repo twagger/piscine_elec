@@ -398,11 +398,12 @@ void    timer_0_conf(uint16_t prescale) {
     ** This function configures the timer 0.
     */
 
-    // 1. Waveform Generation Mode: PWM phase correct
-    TCCR0A |= (1 << WGM00);
-    // TCCR1B |= (1 << WGM02);
-    // 3. Interrupts when overflow
-    TIMSK0 |= (1 << TOIE0);
+    // 1. Waveform Generation Mode: CTC
+    TCCR0A |= (1 << WGM01);
+    // 3. Value to compare the timer with
+    OCR0A = 0xFF;
+    // 3. Interrupts when compare match
+    TIMSK0 |= (1 << OCIE0A);
     // 4. Clock prescale factor
     TCCR0B |= ((uint32_t)(my_log2(prescale) / 2) << CS00);
 }
@@ -419,8 +420,7 @@ ISR(TIMER1_COMPA_vect){
     counter = (counter + 1 > 9999) ? 0 : counter + 1;
 }
 
-// Disabled
-ISR(TIMER0_OVF_vect){
+ISR(TIMER0_COMPA_vect){
     /*
     ** Timer to update digit and display it on 7 seg
     */
@@ -449,17 +449,13 @@ int main(void){
     if (i2c_error) { return (1); }
 
     // Start a timer to refresh the 7sec
-    // timer_0_conf(1024);
+    timer_0_conf(1024);
 
     // Start a timer to update the counter every second
     timer_1_conf(256, 1);
 
     // Loop
     while (1) {
-        display_one_digit_7seg(counter % 10, 1);
-        display_one_digit_7seg((counter / 10) % 10, 2);
-        display_one_digit_7seg((counter / 100) % 10, 3);
-        display_one_digit_7seg((counter / 1000) % 10, 4);
     }
 
     return (0);
