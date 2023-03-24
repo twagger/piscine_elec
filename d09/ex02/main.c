@@ -327,26 +327,21 @@ void    display_one_digit_7seg(uint8_t number){
     // Start
     i2c_start(EXPANDER_W, TW_MT_SLA_ACK);
     if (i2c_error) { return; }
-    uart_printstr("1\n\r");
     
     // Write to output port 0 and 1
     i2c_write(0x02);
     if (i2c_error) { return; }
-    uart_printstr("2\n\r");
 
     // Port 0
     i2c_write(0b01111111);
     if (i2c_error) { return; }
-    uart_printstr("3\n\r");
 
     // Port 1
     i2c_write(0b11011011);
     if (i2c_error) { return; }
-    uart_printstr("4\n\r");
 
     // Stop i2c
     i2c_stop();
-    uart_printstr("4\n\r");
 }
 
 /*
