@@ -47,13 +47,26 @@ void    select_device(uint8_t device){
     ** Select ADC device
     */
 
+    // Ref voltage AVcc
+    ADMUX &= ~(1 << REFS1);
+    ADMUX |= (1 << REFS0);
     if (device == RV1) {
         ADMUX &= ~((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0));
+        
     } else if (device == LDR) {
         ADMUX &= ~((1 << MUX3) | (1 << MUX2) | (1 << MUX1));
         ADMUX |= (1 << MUX0);
     } else if (device == NTC) {
         ADMUX &= ~((1 << MUX3) | (1 << MUX2) | (1 << MUX0));
         ADMUX |= (1 << MUX1);
+    } else if (device == TEMP) {
+        ADMUX = (1 << MUX3);
+        // Reference Voltage (internal 1.1v)
+        ADMUX |= (3 << REFS0);
     }
+}
+
+void    disable_adc(void){
+    // Disable ADC
+    ADCSRA &= ~(1 << ADEN);
 }

@@ -15,6 +15,10 @@
 # define OPT_DATA 0
 # define OPT_START 1
 # define OPT_STOP 2
+# define D11 1
+# define D10 2
+# define D09 3
+# define DASH 0x40
 
 /*
 ** -----------------------------------------------------------------------------
@@ -45,6 +49,7 @@ void    i2c_write(unsigned char data);
 uint8_t i2c_read(void);
 void    i2c_stop(void);
 void    send_nack(void);
+void    handle_i2c_error(void);
 
 /*
 ** -----------------------------------------------------------------------------
@@ -59,19 +64,16 @@ void    init_i2e_expander(uint8_t port0, uint8_t port1);
 ** -----------------------------------------------------------------------------
 */
 void    clear_all_digits(void);
-void    display_one_digit(uint8_t number, uint8_t position);
+void    display_one_digit(uint8_t number, uint8_t position, uint8_t dot);
+void    display_one_sign(uint8_t sign, uint8_t position, uint8_t dot);
 
 /*
 ** -----------------------------------------------------------------------------
-** Switch
+** I2C Leds
 ** -----------------------------------------------------------------------------
 */
-uint8_t check_sw3(void);
-
-/*
-** -----------------------------------------------------------------------------
-** Leds
-** -----------------------------------------------------------------------------
-*/
+void    toogle_i2c_led(uint8_t led);
+void    turn_on_i2c_led(uint8_t led);
+void    turn_off_i2c_led(uint8_t led);
 
 #endif

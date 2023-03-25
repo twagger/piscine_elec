@@ -1,5 +1,5 @@
-#ifndef UART_H
-# define UART_H
+#ifndef SWITCH_H
+# define SWITCH_H
 
 /*
 ** -----------------------------------------------------------------------------
@@ -7,17 +7,15 @@
 ** -----------------------------------------------------------------------------
 */
 # include <avr/io.h>
-# define UART_BAUDRATE 115200
+# include "i2c.h"
 
 /*
 ** -----------------------------------------------------------------------------
-** Functions
+** General
 ** -----------------------------------------------------------------------------
 */
-void            uart_init(uint32_t baud, uint8_t double_speed);
-void            uart_tx(char c);
-unsigned char   uart_rx(void);
-void            uart_printstr(const char *str);
-void            uart_byte_printer(unsigned char c);
+void    switch1_init(uint8_t sense_control);
+void    switch2_init(void);
+uint8_t switch3_check(void);
 
 #endif

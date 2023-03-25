@@ -1,5 +1,5 @@
-#ifndef UART_H
-# define UART_H
+#ifndef RGB_H
+# define RGB_H
 
 /*
 ** -----------------------------------------------------------------------------
@@ -7,17 +7,24 @@
 ** -----------------------------------------------------------------------------
 */
 # include <avr/io.h>
-# define UART_BAUDRATE 115200
+// PINS
+#define DEL_RED PD5
+#define DEL_GREEN PD6
+#define DEL_BLUE PD3
+#define RED 0xFF0000
+#define GREEN 0x00FF00
+#define BLUE 0x0000FF
+#define YELLOW 0xFFFF00
+#define CYAN 0x00FFFF
+#define MAGENTA 0xFF00FF
+#define WHITE 0xFFFFFF
 
 /*
 ** -----------------------------------------------------------------------------
 ** Functions
 ** -----------------------------------------------------------------------------
 */
-void            uart_init(uint32_t baud, uint8_t double_speed);
-void            uart_tx(char c);
-unsigned char   uart_rx(void);
-void            uart_printstr(const char *str);
-void            uart_byte_printer(unsigned char c);
+void    init_rgb(void);
+void    display_rgb(uint32_t rgb);
 
 #endif

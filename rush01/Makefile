@@ -5,9 +5,12 @@ SRCS		= srcs/main.c \
 			  srcs/i2c/i2c.c \
 			  srcs/i2c/expander.c \
 			  srcs/i2c/7segments.c \
+			  srcs/i2c/led.c \
 			  srcs/adc/adc.c \
 			  srcs/spi/spi.c \
+			  srcs/switch/switch.c \
 			  srcs/timer/timer.c \
+			  srcs/rgb/rgb.c \
 			  srcs/utils/utils.c
 BIN_FILE	= srcs/program.bin
 HEX_FILE	= srcs/program.hex

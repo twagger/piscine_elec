@@ -1,18 +1,18 @@
 #include "i2c.h"
 
 // General
-uint8_t   i2c_error = 0;
-const uint8_t    debug = 0;
-const char       *status_mess[] = {\
+uint8_t         i2c_error = 0;
+const uint8_t   debug = 0;
+const char      *status_mess[] = {\
                       "A START condition has been transmitted", \
                       "SLA+W has been transmitted; ACK received", \
                       "SLA+R has been transmitted; ACK received", \
                       "Data byte has been transmitted; ACK received", \
                       "A repeated START condition has been transmitted", \
                       "Data byte has been received; NOT ACK has been returned"};
-const uint8_t    status_codes[] = {TW_START, TW_MT_SLA_ACK,
-                                          TW_MR_SLA_ACK, TW_MT_DATA_ACK,
-                                          TW_REP_START, TW_MR_DATA_NACK};
+const uint8_t   status_codes[] = {TW_START, TW_MT_SLA_ACK,
+                                  TW_MR_SLA_ACK, TW_MT_DATA_ACK,
+                                  TW_REP_START, TW_MR_DATA_NACK};
 
 /*
 ** -----------------------------------------------------------------------------
@@ -34,11 +34,6 @@ int check_for_status(uint8_t expected){
     */
 
     if ((TWSR & 0xF8) != expected){
-        // push error to screen
-        uart_printstr("Error\n\r");
-        uart_byte_printer((TWSR & 0xF8));
-        uart_byte_printer(expected);
-        i2c_error = 1;
         return (1);
     }
     else if (debug == 1) {
@@ -63,7 +58,7 @@ void    send_to_i2c(uint8_t option, unsigned char data, uint8_t expected){
         TWCR = (1 << TWINT) | (1 << TWSTA)| (1 << TWEN);
         wait_for_transmission();
         if (check_for_status(expected) == 1) {
-            return;
+            handle_i2c_error();
         }
     }
     else if (option == OPT_STOP) {
@@ -78,7 +73,7 @@ void    send_to_i2c(uint8_t option, unsigned char data, uint8_t expected){
         TWCR = (1 << TWINT) | (1 << TWEN);
         wait_for_transmission();
         if (check_for_status(expected) == 1) {
-            return;
+            handle_i2c_error();
         }
     }
 }
@@ -103,7 +98,6 @@ void    i2c_start(uint8_t data, uint8_t expected){
 
     // Send start condition
     send_to_i2c(OPT_START, 0, TW_START);
-    if (i2c_error) { return; }
         
     // Send slave address
     send_to_i2c(OPT_DATA, data, expected);
@@ -117,7 +111,6 @@ void    i2c_repeat_start(uint8_t data, uint8_t expected){
 
     // Send start condition
     send_to_i2c(OPT_START, 0, TW_REP_START);
-    if (i2c_error) { return; }
         
     // Send slave address
     send_to_i2c(OPT_DATA, data, expected);
@@ -158,4 +151,14 @@ void    send_nack(void){
     if (check_for_status(TW_MR_DATA_NACK) == 1) {
         return;
     }
+}
+
+void    handle_i2c_error(){
+    /*
+    ** Reset I2C in case of error
+    */
+
+    // Set SDA + SCL to idle state
+    PORTC |= (1 << PORTC5) | (1 << PORTC4);
+    _delay_ms(10);
 }

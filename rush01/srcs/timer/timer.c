@@ -27,8 +27,15 @@ void    timer_0_conf(uint8_t mode, uint16_t prescale, uint8_t comp_a, \
     TCCR0B |= ((uint32_t)(my_log2(prescale) / 2) << CS00);
 }
 
+void    stop_timer_0(void) {
+    /*
+    ** Stops the timer 0
+    */
+    TCCR0B &= ~((1 << CS00) | (1 << CS01) | (1 << CS02));
+}
+
 void    timer_1_conf(uint8_t mode, uint16_t prescale, uint16_t comp_a, \
-                     uint8_t frequency) {
+                     float frequency) {
     /*
     ** This function configures the timer 1
     */
@@ -43,11 +50,19 @@ void    timer_1_conf(uint8_t mode, uint16_t prescale, uint16_t comp_a, \
     TCCR1A |= (mode & 0x03);
     TCCR1B |= (((mode >> 2) & 0x01) << 3);
     // 3. Value to compare the timer with
-    OCR1A = (F_CPU / (2 * 256 * frequency) - 1);
+    OCR1A = (uint16_t)(F_CPU / (2 * 256 * frequency) - 1);
     // 4. Enable and configure timer 1 interrupt
     TIMSK1 |= (1 << OCIE1A);
     // 4. Clock prescale factor + launch the timer
     TCCR1B |= ((uint32_t)(my_log2(prescale) / 2) << CS10);
+}
+
+void    stop_timer_1(void) {
+    /*
+    ** Stops the timer 1
+    */
+
+    TCCR1B &= ~((1 << CS10) | (1 << CS11) | (1 << CS12));
 }
 
 void    timer_2_conf(uint8_t mode, uint16_t prescale, uint8_t comp_a, \
@@ -68,6 +83,13 @@ void    timer_2_conf(uint8_t mode, uint16_t prescale, uint8_t comp_a, \
     // 3. Interrupts when compare match
     TIMSK2 |= (1 << OCIE2A);
     // 4. Clock prescale factor
-    TCCR2B |= ((uint32_t)(my_log2(prescale) / 2) << CS20);
+    TCCR2B |= ((uint32_t)(my_log2(prescale) - 2) << CS20);
 }
 
+void    stop_timer_2(void) {
+    /*
+    ** Stops the timer 2
+    */
+
+    TCCR2B &= ~((1 << CS20) | (1 << CS21) | (1 << CS22));
+}

@@ -1,11 +1,39 @@
-#include "i2c.h"
-
+#include "switch.h"
+#include "uart.h" // for debug
 /*
 ** -----------------------------------------------------------------------------
-** I2C SW3 Functions
+** SWITCH Functions
 ** -----------------------------------------------------------------------------
 */
-uint8_t check_sw3(void){
+
+void    switch1_init(uint8_t sense_control){ //INT0
+    /*
+    ** Enable and conf interruptions for SW1 (INT0)
+    */
+ 
+    // Parameterization of the interrupt
+    // 1. Sense control : low level
+    // As bouncing will generates more edges than level, it is safer to chose
+    // the low level instead of the falling or rising edge events.
+    EICRA &= ~((1 << ISC00) | (1 << ISC01));
+    // EICRA |= (sense_control << ISC00);
+    // 2. Enable INT0 interrupt
+    EIMSK |= (1 << INT0);
+}
+
+void    switch2_init() { // PCINT20
+    /*
+    ** Parameterization of the PCINT20 interrupt
+    ** Carefull : ANY change will trigger the associated ISR (no sense control)
+    */
+
+    // Enable PCINT23:16 range interrupts
+    PCICR |= (1 << PCIE2);
+    // Enable PCINT20 interrupts only
+    PCMSK2 = (1 << PCINT20);
+}
+
+uint8_t switch3_check(void){
     /*
     ** Reads from E2C IO expander to check if SW3 is pressed
     */

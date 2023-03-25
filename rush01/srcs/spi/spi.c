@@ -90,3 +90,19 @@ void    spi_led(uint32_t color, uint8_t brightness){
     spi_write((uint8_t)(color >> 8) & 0xFF);
     spi_write((uint8_t)(color >> 16) & 0xFF);
 }
+
+void    display_colors_on_leds(uint32_t d6, uint32_t d7, uint32_t d8){
+       
+    spi_apa102_start_frame();
+
+    spi_led(d6, BRIGHTNESS);
+    spi_led(d7, BRIGHTNESS);
+    spi_led(d8, BRIGHTNESS);
+
+    spi_apa102_end_frame();
+}
+
+void    disable_spi(void){
+    // Disable SPI
+    SPCR &= ~(1 << SPE);
+}
