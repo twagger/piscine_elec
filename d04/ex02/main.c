@@ -313,14 +313,20 @@ void    read_measurement(){
         TWCR |= (1 << TWEA);
         // read and store into an array
         if (i == MEASUREMENT_PACKETS - 1){ // Last data byte
-            tmp = i2c_read();
             // send nack and check
             TWCR = (1 << TWINT) | (1 << TWEN);
             wait_for_transmission();
             if (check_for_status(TW_MR_DATA_NACK) == 1) {
                 return;
             }
+            tmp = i2c_read();
         } else {
+            // send ack and check
+            TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
+            wait_for_transmission();
+            if (check_for_status(TW_MR_DATA_ACK) == 1) {
+                return;
+            }
             tmp = i2c_read();
             index = meaner % 3;
             // save tmp in humidity / temperature array
@@ -330,12 +336,6 @@ void    read_measurement(){
                           temps[index] = tmp & 0xF; }
             if (i == 4) { temps[index] = (temps[index] << 8) | tmp; }
             if (i == 5) { temps[index] = (temps[index] << 8) | tmp; }
-            // send ack and check
-            TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
-            wait_for_transmission();
-            if (check_for_status(TW_MR_DATA_ACK) == 1) {
-                return;
-            }
         }
     }
 
